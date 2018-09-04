@@ -27,11 +27,13 @@ import io.druid.hll.HyperLogLogHash;
 import io.druid.java.util.common.logger.Logger;
 import io.druid.query.aggregation.hyperloglog.HyperUniquesSerde;
 import io.druid.segment.incremental.IncrementalIndex;
+import io.druid.segment.incremental.IncrementalIndex.Builder;
 import io.druid.segment.incremental.IncrementalIndexSchema;
 import io.druid.segment.serde.ComplexMetrics;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -67,6 +69,8 @@ public class IndexIngestionBenchmark
   private ArrayList<InputRow> rows;
   private BenchmarkSchemaInfo schemaInfo;
 
+private Builder indexBuilder;
+
   @Setup
   public void setup()
   {
@@ -89,19 +93,22 @@ public class IndexIngestionBenchmark
       }
       rows.add(row);
     }
+    
+    indexBuilder = new IncrementalIndex.Builder()
+    .setIndexSchema(
+        new IncrementalIndexSchema.Builder()
+            .withMetrics(schemaInfo.getAggsArray())
+            .withRollup(rollup)
+            .build()
+    )
+    .setReportParseExceptions(false)
+    .setMaxRowCount(rowsPerSegment * 2);
   }
-
-  private IncrementalIndex makeIncIndex()
+  
+  @Setup(Level.Invocation)
+  private void makeIncIndex()
   {
-    return new IncrementalIndex.Builder()
-        .setIndexSchema(
-            new IncrementalIndexSchema.Builder()
-                .withMetrics(schemaInfo.getAggsArray())
-                .withRollup(rollup)
-                .build()
-        )
-        .setReportParseExceptions(false)
-        .setMaxRowCount(rowsPerSegment * 2)
+    incIndex = indexBuilder
         .buildOnheap();
   }
 
@@ -110,7 +117,6 @@ public class IndexIngestionBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void addRows(Blackhole blackhole) throws Exception
   {
-	incIndex = makeIncIndex();
     for (int i = 0; i < rowsPerSegment; i++) {
       InputRow row = rows.get(i);
       int rv = incIndex.add(row).getRowCount();
