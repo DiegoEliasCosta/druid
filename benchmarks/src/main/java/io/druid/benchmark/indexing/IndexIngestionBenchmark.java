@@ -106,7 +106,7 @@ private Builder indexBuilder;
   }
   
   @Setup(Level.Invocation)
-  private void makeIncIndex()
+  public void makeIncIndex()
   {
     incIndex = indexBuilder
         .buildOnheap();
