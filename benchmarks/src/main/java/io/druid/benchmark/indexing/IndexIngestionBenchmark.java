@@ -92,12 +92,6 @@ public class IndexIngestionBenchmark
     }
   }
 
-  @Setup(Level.Invocation)
-  public void setup2()
-  {
-    incIndex = makeIncIndex();
-  }
-
   private IncrementalIndex makeIncIndex()
   {
     return new IncrementalIndex.Builder()
@@ -117,6 +111,7 @@ public class IndexIngestionBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void addRows(Blackhole blackhole) throws Exception
   {
+	incIndex = makeIncIndex();
     for (int i = 0; i < rowsPerSegment; i++) {
       InputRow row = rows.get(i);
       int rv = incIndex.add(row).getRowCount();

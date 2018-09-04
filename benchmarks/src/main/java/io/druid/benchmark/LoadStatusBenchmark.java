@@ -63,8 +63,10 @@ public class LoadStatusBenchmark
 
   private Set<DataSegment> datasourceSegments;
   private Collection<DataSegment> serverSegments;
+  
+  private Map<String, DataSegment> immutableDatasourceSegmentsMap;
 
-  @Setup(Level.Invocation)
+  @Setup(Level.Iteration)
   public void setup()
   {
     Map<String, DataSegment> immutableDatasourceSegmentsMap;
@@ -93,9 +95,7 @@ public class LoadStatusBenchmark
       }
     }
 
-    immutableDatasourceSegmentsMap = ImmutableMap.copyOf(datasourceSegmentsMap);
-
-    datasourceSegments = Sets.newHashSet(immutableDatasourceSegmentsMap.values());
+    this.immutableDatasourceSegmentsMap = ImmutableMap.copyOf(datasourceSegmentsMap);
     serverSegments = Collections.unmodifiableCollection(serverSegmentsMap.values());
   }
 
@@ -104,6 +104,7 @@ public class LoadStatusBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void oldVersion(Blackhole blackhole)
   {
+	datasourceSegments = Sets.newHashSet(immutableDatasourceSegmentsMap.values());  
     datasourceSegments.removeAll(serverSegments);
     blackhole.consume(datasourceSegments);
   }
@@ -113,6 +114,7 @@ public class LoadStatusBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void newVersion(Blackhole blackhole)
   {
+	datasourceSegments = Sets.newHashSet(immutableDatasourceSegmentsMap.values()); 
     for (DataSegment segment : serverSegments) {
       datasourceSegments.remove(segment);
     }
