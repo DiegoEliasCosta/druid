@@ -62,12 +62,12 @@ public class LoadStatusBenchmark
   private boolean serverHasAllSegments;
 
   private Set<DataSegment> datasourceSegments;
+  private Map<String, DataSegment> immutableDatasourceSegmentsMap;
   private Collection<DataSegment> serverSegments;
 
   @Setup(Level.Trial)
   public void setup()
   {
-    Map<String, DataSegment> immutableDatasourceSegmentsMap;
     ConcurrentHashMap<String, DataSegment> serverSegmentsMap;
 
     HashMap<String, DataSegment> datasourceSegmentsMap = Maps.newHashMap();
@@ -94,14 +94,13 @@ public class LoadStatusBenchmark
     }
 
     immutableDatasourceSegmentsMap = ImmutableMap.copyOf(datasourceSegmentsMap);
-
     serverSegments = Collections.unmodifiableCollection(serverSegmentsMap.values());
   }
   
   @Setup(Level.Invocation)
   public void setupInvocation()
   {
-	  datasourceSegments = Sets.newHashSet(immutableDatasourceSegmentsMap.values()); 
+    datasourceSegments = Sets.newHashSet(immutableDatasourceSegmentsMap.values()); 
   }
 
   @Benchmark
